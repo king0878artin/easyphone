@@ -65,7 +65,7 @@ class MainActivity : Activity() {
         header.addView(text("Favorites  •  Recents  •  Contacts", 14f, Color.WHITE))
         root.addView(header)
         search = EditText(this).apply {
-            hint = "Search contacts"; textSize = 18f; singleLine = true
+            hint = "Search contacts"; textSize = 18f; setSingleLine(true)
             setPadding(dp(16), 0, dp(16), 0); background = rounded(Color.WHITE, 16)
         }
         val searchWrap = LinearLayout(this).apply { setPadding(dp(14), dp(10), dp(14), dp(6)) }
@@ -130,11 +130,12 @@ class MainActivity : Activity() {
             "Recents" -> {
                 body.addView(text("Recent calls", 23f, ink, true))
                 body.addView(text("Your recent calls will appear here.", 17f))
-                val open = button("Open call history", blue) {
-                    try { startActivity(Intent(Intent.ACTION_VIEW, ContactsContract.Calls.CONTENT_URI)) }
-                    catch (_: Exception) { Toast.makeText(this, "Call history is unavailable", Toast.LENGTH_SHORT).show() }
-                }
-                body.addView(open, LinearLayout.LayoutParams(-1, dp(58)))
+                body.addView(text("For your full call history, open the Phone app on your device.", 17f))
+                body.addView(button("Open Phone app", blue) {
+                    val intent = Intent(Intent.ACTION_DIAL)
+                    try { startActivity(intent) }
+                    catch (_: Exception) { Toast.makeText(this, "Phone app is unavailable", Toast.LENGTH_SHORT).show() }
+                }, LinearLayout.LayoutParams(-1, dp(58)))
             }
             else -> renderPeople()
         }
