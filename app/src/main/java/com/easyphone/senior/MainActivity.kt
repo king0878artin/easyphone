@@ -18,7 +18,7 @@ import android.widget.*
 import android.text.Editable
 import android.text.TextWatcher
 
-data class Person(val id: Long, val name: String, val number: String, val photo: Uri?)
+data class Person(val id: Long, val name: String, val number: String, val photo: Uri?, val favorite: Boolean)
 
 class MainActivity : Activity() {
     private val blue = Color.rgb(25, 103, 210)
@@ -100,7 +100,8 @@ class MainActivity : Activity() {
             ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
             ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
             ContactsContract.CommonDataKinds.Phone.NUMBER,
-            ContactsContract.CommonDataKinds.Phone.PHOTO_URI
+            ContactsContract.CommonDataKinds.Phone.PHOTO_URI,
+            ContactsContract.CommonDataKinds.Phone.STARRED
         )
         val seen = mutableSetOf<String>()
         val cursor: Cursor? = contentResolver.query(uri, projection, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE NOCASE")
@@ -109,12 +110,13 @@ class MainActivity : Activity() {
             val nameCol = it.getColumnIndexOrThrow(projection[1])
             val numCol = it.getColumnIndexOrThrow(projection[2])
             val photoCol = it.getColumnIndexOrThrow(projection[3])
+            val starredCol = it.getColumnIndexOrThrow(projection[4])
             while (it.moveToNext()) {
                 val id = it.getLong(idCol); val name = it.getString(nameCol) ?: "Unknown"
                 val number = it.getString(numCol) ?: ""
                 if (number.isNotBlank() && seen.add("$id:$number")) {
                     val photo = it.getString(photoCol)?.let { p -> Uri.parse(p) }
-                    result.add(Person(id, name, number, photo))
+                    result.add(Person(id, name, number, photo, it.getInt(starredCol) == 1))
                 }
             }
         }
@@ -150,9 +152,9 @@ class MainActivity : Activity() {
             showPermissionMessage(); return
         }
         val query = if (::search.isInitialized) search.text.toString().trim() else ""
-        val filtered = people.filter { it.name.contains(query, true) || it.number.contains(query) }
+        val filtered = people.filter { (page != "Favorites" || it.favorite) && (it.name.contains(query, true) || it.number.contains(query)) }
         if (filtered.isEmpty()) {
-            body.addView(text("No contacts found", 19f))
+            body.addView(text(if (page == "Favorites") "No favorite contacts yet. Mark people as favorites in Contacts." else "No contacts found", 19f))
             body.addView(button("Add contact") {
                 startActivity(Intent(ContactsContract.Intents.Insert.ACTION).setType(ContactsContract.RawContacts.CONTENT_TYPE))
             }, LinearLayout.LayoutParams(-1, dp(58)))
