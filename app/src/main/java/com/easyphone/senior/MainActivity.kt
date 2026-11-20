@@ -18,7 +18,6 @@ import android.widget.*
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 
 data class Person(val id: Long, val name: String, val number: String, val photo: Uri?)
 
