@@ -17,7 +17,6 @@ import android.view.ViewGroup
 import android.widget.*
 import android.text.Editable
 import android.text.TextWatcher
-import androidx.activity.result.contract.ActivityResultContracts
 
 data class Person(val id: Long, val name: String, val number: String, val photo: Uri?)
 
@@ -30,9 +29,6 @@ class MainActivity : Activity() {
     private lateinit var root: LinearLayout
     private lateinit var body: LinearLayout
     private lateinit var search: EditText
-    private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) { loadContacts(); showPage() } else showPermissionMessage()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +37,7 @@ class MainActivity : Activity() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
         buildShell()
         if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) loadContacts()
-        else permission.launch(Manifest.permission.READ_CONTACTS)
+        else requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), 100)
         showPage()
     }
 
@@ -233,11 +229,19 @@ class MainActivity : Activity() {
         catch (_: Exception) { Toast.makeText(this, "Unable to open phone dialer", Toast.LENGTH_SHORT).show() }
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            loadContacts()
+            showPage()
+        } else showPermissionMessage()
+    }
+
     private fun showPermissionMessage() {
         if (!::body.isInitialized) return
         body.removeAllViews()
         body.addView(text("Allow contact access to show your family photos and phone numbers.", 19f))
-        body.addView(button("Allow contacts", blue) { permission.launch(Manifest.permission.READ_CONTACTS) },
+        body.addView(button("Allow contacts", blue) { requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), 100) },
             LinearLayout.LayoutParams(-1, dp(60)))
     }
 
